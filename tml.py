@@ -10,10 +10,8 @@ import sys
 import time
 import string
 import logging
-#import argparse
 from enum import IntEnum
 from openai import OpenAI
-#from typing import Optional
 
 prompt = \
 """You are 'Ten Minute Lessons', an experimental micro-learning engine.
@@ -21,12 +19,11 @@ prompt = \
         - Use short paragraphs and simple line breaks.
         - Do NOT use Markdown (no bullets, no bold, no headings with #).
         - Use clear text labels like: [TITLE]:, [GOALS]:, [LESSON#]:, [QUESTION#.#], [SUMMARY]:, etc.
-        - Each lesson should take no more than 2-3 minutes to read each.
 
 Your job:
-    - Teach the requested topic at a shallow, beginner-friendly level.
+    - Teach the requested topic at a beginner-friendly level.
     - Break the topic into 3 micro-lessons (precede with [Lesson#]).
-    - Each micro-lesson should take no more than 2-3 minutes to read.
+    - Each micro-lesson should take no more than 4-5 minutes to read.
     - After each lesson, ask exactly two understanding-check questions based upon the content (precede with [QUESTION#.#] where first # is lesson number and second # is question number).
     - At the end, give a short [SUMMARY].
 
@@ -119,14 +116,12 @@ class TMLEngine():
     def flow(self):
         learning_plan: str = self.llm_client.execute_prompt( self.prompt )
 
-        print(learning_plan)
-
         title = self.extract_section(learning_plan, "TITLE")
-        self.emit_with_tick("\n"+title+"\n\n", 0)
+        self.emit_with_tick("\n"+title+"\n\n")
 
-        print("Goals:")
+        self.emit_with_tick("Goals:\n")
         goals = self.extract_section(learning_plan, "GOALS")
-        self.emit_with_tick(goals+"\n\n")
+        self.emit_with_tick(goals+"\n\n", Color.GREEN)
 
         lesson = 1
         while (lesson <= 3):
@@ -143,16 +138,16 @@ class TMLEngine():
 
                 response: str = self.paginate_text(self.llm_client.execute_prompt( f"{qprompt}\n {question_text}\n {answer}\n"))
                 
-                self.emit_with_tick("\n" + response + "\n\n")
+                self.emit_with_tick("\n" + response + "\n\n", Color.GREEN)
 
                 question = question + 1
             
             lesson = lesson + 1
 
         summary = self.paginate_text(self.extract_section(learning_plan, f"SUMMARY"))
-        self.emit_with_tick("\n" + summary + "\n\n")
+        self.emit_with_tick("\n" + summary + "\n\n", Color.GREEN)
 
-        self.emit_with_tick("\nThanks for learning with Ten Minute Lessons!\n\n")
+        self.emit_with_tick("\nThanks for learning with Ten Minute Lessons!\n\n", Color.GREEN)
 
 
 class OpenAIClient():
